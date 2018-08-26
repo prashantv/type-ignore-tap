@@ -4,10 +4,9 @@
 
 // How long to ignore trackpad events for after keyboard events.
 #define IGNORE_MOUSE_MS 300
-#define MAX_HARDWARE_ID 500
 
-#define APPLE_TRACKPAD_ID "HID\\VID_05AC&PID_0262&REV_0222&MI_01&Col01"
-#define APPLE_NATIVE_KEYBOARD "HID\\VID_05AC&PID_0262&REV_0222&MI_00&Col01"
+// The maximum string length of a hardware ID.
+#define MAX_HARDWARE_ID 500
 
 typedef struct {
 	DWORD ignoreTrackpadTill;
@@ -32,19 +31,28 @@ int main(int argc, char** argv) {
 	// Increase priority since we are responding to events.
 	SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
+	if (argc < 3) {
+		printf("Expect %s [trackpad_hardware_id] [mouse_hardware_id]\n");
+		return EXIT_FAILURE;
+	}
+
+	// Parse out device IDs from arguments.
+	char* trackpad_id = argv[1];
+	char* keyboard_id = argv[2];
+
 	InterceptionContext ctx = interception_create_context();
 	state s;
 	s.ignoreTrackpadTill = 0;
-	s.trackpad = find_device(ctx, APPLE_TRACKPAD_ID);
-	s.keyboard = find_device(ctx, APPLE_NATIVE_KEYBOARD);
+	s.trackpad = find_device(ctx, trackpad_id);
+	s.keyboard = find_device(ctx, keyboard_id);
 
 	if (s.trackpad == 0) {
-		printf("Failed to find trackpad with specified ID: %s", APPLE_TRACKPAD_ID);
-		return 1;
+		printf("Failed to find trackpad with specified ID: %s", trackpad_id);
+		return EXIT_FAILURE;
 	}
 	if (s.keyboard == 0) {
-		printf("Failed to find keyboard with specified ID: %s", APPLE_TRACKPAD_ID);
-		return 1;
+		printf("Failed to find keyboard with specified ID: %s", keyboard_id);
+		return EXIT_FAILURE;
 	}
 
 	// Add filters for the specific devices we found.
