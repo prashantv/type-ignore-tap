@@ -2,13 +2,11 @@
 #include <windows.h>
 #include <interception.h>
 
-// How long to ignore trackpad events for after keyboard events.
-#define IGNORE_MOUSE_MS 300
-
 // The maximum string length of a hardware ID.
 #define MAX_HARDWARE_ID 500
 
 typedef struct {
+	int ignorePeriod;
 	DWORD ignoreTrackpadTill;
 	InterceptionDevice keyboard;
 	InterceptionDevice trackpad;
@@ -32,7 +30,7 @@ int main(int argc, char** argv) {
 	SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
 	if (argc < 3) {
-		printf("Expect %s [trackpad_hardware_id] [mouse_hardware_id]\n");
+		printf("Expect %s <trackpad_hardware_id> <mouse_hardware_id> [delay]\n");
 		return EXIT_FAILURE;
 	}
 
@@ -40,8 +38,14 @@ int main(int argc, char** argv) {
 	char* trackpad_id = argv[1];
 	char* keyboard_id = argv[2];
 
+	int ignorePeriod = 300;
+	if (argc > 3) {
+		ignorePeriod = atoi(argv[3]);
+	}
+
 	InterceptionContext ctx = interception_create_context();
 	state s;
+	s.ignorePeriod = ignorePeriod;
 	s.ignoreTrackpadTill = 0;
 	s.trackpad = find_device(ctx, trackpad_id);
 	s.keyboard = find_device(ctx, keyboard_id);
@@ -111,9 +115,9 @@ void check_keyboard(state* s, DWORD curTime, InterceptionDevice device, Intercep
 	}
 
 	// Ignore all mouse events for a certain amount of time.
-	s->ignoreTrackpadTill = curTime + IGNORE_MOUSE_MS;
+	s->ignoreTrackpadTill = curTime + s->ignorePeriod;
 	InterceptionKeyStroke *keyStroke = (InterceptionKeyStroke *)stroke;
-	printf("Got keyboard event: %d\n", keyStroke->code);
+	printf("Got keyboard event: %d, ignoring for %d ms\n", keyStroke->code, s->ignorePeriod);
 }
 
 // block_mouse_event returns whether to block the mouse event.
