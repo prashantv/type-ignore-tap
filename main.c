@@ -5,6 +5,8 @@
 // The maximum string length of a hardware ID.
 #define MAX_HARDWARE_ID 500
 
+#define DEBUGF(...) if (0) { printf(##__VA_ARGS__); }
+
 typedef struct {
 	int ignorePeriod;
 	DWORD ignoreTrackpadTill;
@@ -30,7 +32,7 @@ int main(int argc, char** argv) {
 	SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
 	if (argc < 3) {
-		printf("Expect %s <trackpad_hardware_id> <mouse_hardware_id> [delay]\n");
+		printf("Expect ./binary <trackpad_hardware_id> <mouse_hardware_id> [delay]\n");
 		return EXIT_FAILURE;
 	}
 
@@ -117,7 +119,7 @@ void check_keyboard(state* s, DWORD curTime, InterceptionDevice device, Intercep
 	// Ignore all mouse events for a certain amount of time.
 	s->ignoreTrackpadTill = curTime + s->ignorePeriod;
 	InterceptionKeyStroke *keyStroke = (InterceptionKeyStroke *)stroke;
-	printf("Got keyboard event: %d, ignoring for %d ms\n", keyStroke->code, s->ignorePeriod);
+	DEBUGF("Got keyboard event: %d, ignoring for %d ms\n", keyStroke->code, s->ignorePeriod);
 }
 
 // block_mouse_event returns whether to block the mouse event.
@@ -127,12 +129,12 @@ int block_mouse_event(state* s, DWORD curTime, InterceptionDevice device, Interc
 	}
 
 	InterceptionMouseStroke *mouseStroke = (InterceptionMouseStroke *)stroke;
-	printf("Got mouse event: %d\n", mouseStroke->state);
+	DEBUGF("Got mouse event: %d\n", mouseStroke->state);
 
 	if (curTime > s->ignoreTrackpadTill) {
 		return 0;
 	}
 
-	printf("!Ignoring mouse event!\n");
+	printf("!Ignoring mouse event %d!\n", mouseStroke->state);
 	return 1;
 }
