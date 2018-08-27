@@ -12,6 +12,7 @@ typedef struct {
 	DWORD ignoreTrackpadTill;
 	InterceptionDevice keyboard;
 	InterceptionDevice trackpad;
+	InterceptionKeyStroke lastKey;
 } state;
 
 // Hacky global for the custom predicate.
@@ -116,10 +117,17 @@ void check_keyboard(state* s, DWORD curTime, InterceptionDevice device, Intercep
 		return;
 	}
 
-	// Ignore all mouse events for a certain amount of time.
-	s->ignoreTrackpadTill = curTime + s->ignorePeriod;
 	InterceptionKeyStroke *keyStroke = (InterceptionKeyStroke *)stroke;
-	DEBUGF("Got keyboard event: %d, ignoring for %d ms\n", keyStroke->code, s->ignorePeriod);
+	DEBUGF("Got keyboard code: %d state: %d information: %ud\n", keyStroke->code, keyStroke->state, keyStroke->information);
+	if (memcmp(keyStroke, &s->lastKey, sizeof(InterceptionKeyStroke)) == 0) {
+		DEBUGF("  ignoring duplicate event, likely a repeat\n");
+	} else {
+		// Ignore all mouse events for a certain amount of time.
+		s->ignoreTrackpadTill = curTime + s->ignorePeriod;
+		DEBUGF("  ignoring mouse for %d ms\n", s->ignorePeriod);
+	}
+
+	s->lastKey = *keyStroke;
 }
 
 // block_mouse_event returns whether to block the mouse event.
