@@ -119,6 +119,17 @@ void check_keyboard(state* s, DWORD curTime, InterceptionDevice device, Intercep
 
 	InterceptionKeyStroke *keyStroke = (InterceptionKeyStroke *)stroke;
 	DEBUGF("Got keyboard code: %d state: %d information: %ud\n", keyStroke->code, keyStroke->state, keyStroke->information);
+
+	short code = keyStroke->code;
+	int block = (code == 41) || (code >= 2 && code <= 13) ||
+	    (code >= 16 && code <= 27) ||
+	    (code >= 30 && code <= 40) ||
+	    (code >= 44 && code <= 53);
+
+	if (!block) {
+	  return;
+	}
+
 	if (memcmp(keyStroke, &s->lastKey, sizeof(InterceptionKeyStroke)) == 0) {
 		DEBUGF("  ignoring duplicate event, likely a repeat\n");
 	} else {
