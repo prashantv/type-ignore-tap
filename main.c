@@ -130,14 +130,9 @@ void check_keyboard(state* s, DWORD curTime, InterceptionDevice device, Intercep
 	  return;
 	}
 
-	if (memcmp(keyStroke, &s->lastKey, sizeof(InterceptionKeyStroke)) == 0) {
-		DEBUGF("  ignoring duplicate event, likely a repeat\n");
-	} else {
-		// Ignore all mouse events for a certain amount of time.
-		s->ignoreTrackpadTill = curTime + s->ignorePeriod;
-		DEBUGF("  ignoring mouse for %d ms\n", s->ignorePeriod);
-	}
-
+	// Ignore all mouse events for a certain amount of time.
+	s->ignoreTrackpadTill = curTime + s->ignorePeriod;
+	DEBUGF("  ignoring mouse for %d ms\n", s->ignorePeriod);
 	s->lastKey = *keyStroke;
 }
 
